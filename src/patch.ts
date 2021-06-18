@@ -11,6 +11,7 @@ import { VElement, VFlags, VNode, VProps } from './structs';
 /* istanbul ignore next */
 export const patchProps = (el: HTMLElement, oldProps: VProps, newProps: VProps): void => {
   const cache = [];
+  //挨个替换属性
   for (const oldPropName of Object.keys(oldProps)) {
     const newPropValue = newProps[oldPropName];
     if (newPropValue) {
@@ -77,31 +78,38 @@ export const patch = (
   newVNode: VNode,
   prevVNode?: VNode,
 ): HTMLElement | Text => {
+  //没有新dom则直接移除老dom
   if (!newVNode) {
+    // 删除当前dom本身
+    // [Element.remove() - Web APIs | MDN](https://developer.mozilla.org/en-US/docs/Web/API/Element/remove)
     el.remove();
     return el;
   }
 
   const oldVNode: VNode | undefined = prevVNode ?? el[OLD_VNODE_FIELD];
   const hasString = typeof oldVNode === 'string' || typeof newVNode === 'string';
-
+  //如果是字符串类型，直接替换
   if (hasString && oldVNode !== newVNode) return replaceElementWithVNode(el, newVNode);
   if (!hasString) {
     if (
       (!(<VElement>oldVNode)?.key && !(<VElement>newVNode)?.key) ||
       (<VElement>oldVNode)?.key !== (<VElement>newVNode)?.key
     ) {
+      //都有key且key不同才进行diff
+
       /* istanbul ignore if */
       if (
         (<VElement>oldVNode)?.tag !== (<VElement>newVNode)?.tag &&
         !(<VElement>newVNode).children &&
         !(<VElement>newVNode).props
       ) {
+        //如果标签不同，直接全部替换
         // newVNode has no props/children is replaced because it is generally
         // faster to create a empty HTMLElement rather than iteratively/recursively
         // remove props/children
         return replaceElementWithVNode(el, newVNode);
       }
+      //如果标签相同，则替换属性
       if (oldVNode && !(el instanceof Text)) {
         patchProps(el, (<VElement>oldVNode).props || {}, (<VElement>newVNode).props || {});
 
@@ -114,6 +122,8 @@ export const patch = (
             el.textContent = <string>(<VElement>newVNode).children!.join('');
             break;
           default:
+            //再替换子dom
+            //本质还是递归patch
             patchChildren(el, (<VElement>oldVNode).children, (<VElement>newVNode).children!);
             break;
         }

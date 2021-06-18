@@ -9,14 +9,15 @@ import { VNode } from './structs';
  */
 export const createElement = (vnode: VNode, attachField = true): HTMLElement | Text => {
   if (typeof vnode === 'string') return document.createTextNode(vnode);
+  //创建dom
   const el = document.createElement(vnode.tag);
-
+  //赋予dom属性
   if (vnode.props) {
     for (const name of Object.keys(vnode.props)) {
       el[name] = vnode.props[name];
     }
   }
-
+  //如果有子节点则递归创建子dom
   if (vnode.children) {
     for (let i = 0; i < vnode.children.length; i++) {
       el.appendChild(createElement(vnode.children[i]));
